@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: catalog
 spec:
-  replicas: 1
+  replicas: 3
   strategy:
     rollingUpdate:
       maxUnavailable: 1
@@ -25,6 +25,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: catalog
+            - secretRef:
+                name: catalog-db
           securityContext:
             capabilities:
               drop:
