@@ -4,8 +4,11 @@ metadata:
   name: catalog
   labels:
     app.kubernetes.io/name: catalog
+    app.kubernetes.io/instance: catalog
+    app.kubernetes.io/component: service
+    app.kubernetes.io/owner: retail-store-sample
 spec:
-  replicas: 3
+  replicas: 1
   strategy:
     rollingUpdate:
       maxUnavailable: 1
@@ -13,11 +16,18 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: catalog
+      app.kubernetes.io/instance: catalog
+      app.kubernetes.io/component: service
+      app.kubernetes.io/owner: retail-store-sample
   template:
     metadata:
       labels:
         app.kubernetes.io/name: catalog
+        app.kubernetes.io/instance: catalog
+        app.kubernetes.io/component: service
+        app.kubernetes.io/owner: retail-store-sample
     spec:
+      serviceAccount: catalog-mysql-sa
       securityContext:
         fsGroup: 1000
       containers:
@@ -25,12 +35,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: catalog
-            - secretRef:
-                name: catalog-db
           securityContext:
             capabilities:
               drop:
-              - ALL
+                - ALL
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
@@ -55,3 +63,21 @@ spec:
             requests:
               cpu: 100m
               memory: 256Mi
+          volumeMounts:
+            - name: aws-secrets
+              mountPath: /mnt/secrets-store
+              readOnly: true
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              export RETAIL_CATALOG_PERSISTENCE_USER=$(cat /mnt/secrets-store/MYSQL_USER);
+              export RETAIL_CATALOG_PERSISTENCE_PASSWORD=$(cat /mnt/secrets-store/MYSQL_PASSWORD);
+              echo "Starting Catalog service with secure DB credentials";
+              exec java -jar /app/catalog.jar
+      volumes:
+        - name: aws-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "catalog-db-secrets"
