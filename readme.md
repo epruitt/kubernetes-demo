@@ -20,7 +20,7 @@ Replacing every plaintext credential with a secure, auditable secrets pipeline: 
 
 ![alt text](image.png)
 
-The diagram above maps to the full architecture shown in the project diagram (`EKS_Project_diagram_2.png`). The flow is intentional: IAM trust stays outside the cluster, secret values never travel as environment variables set at the Kubernetes layer, and the CSI driver handles rotation automatically.
+The diagram above maps to the full architecture. The flow is intentional: IAM trust stays outside the cluster, secret values never travel as environment variables set at the Kubernetes layer, and the CSI driver handles rotation automatically.
 
 ---
 
@@ -28,15 +28,20 @@ The diagram above maps to the full architecture shown in the project diagram (`E
 
 ```
 .
-├── 01_catalog_deployment.yaml          # Catalog API — Deployment
-├── 02_catalog_clusterip_service.yaml   # Catalog API — internal ClusterIP Service
-├── 03_catalog_configmap.yaml           # Non-sensitive config (DB endpoint, name, timeout)
-├── 04_catalog_statefulset.yaml         # MySQL — StatefulSet with stable DNS identity
-├── 05_catalog_mysql_headless_service.yaml  # MySQL — headless Service for StatefulSet DNS
-├── 06_catalog_mysql_service_account.yaml   # Shared Kubernetes ServiceAccount
-├── 01-catalog-secretproviderclass.yaml    # SecretProviderClass CRD (SSCD ↔ ASM bridge)
-├── catalog-db-secret-policy.json          # IAM policy granting GetSecretValue on the secret
-└── trust-policy.json                      # IAM trust policy for EKS Pod Identity
+├── catalog_manifest/
+│   ├── 01_catalog_deployment.yaml          # Catalog API — Deployment
+│   ├── 02_catalog_clusterip_service.yaml   # Catalog API — internal ClusterIP Service
+│   ├── 03_catalog_configmap.yaml           # Non-sensitive config (DB endpoint, name, timeout)
+│   ├── 04_catalog_statefulset.yaml         # MySQL — StatefulSet with stable DNS identity
+│   ├── 05_catalog_mysql_headless_service.yaml  # MySQL — headless Service for StatefulSet DNS
+│   └── 06_catalog_mysql_service_account.yaml   # Shared Kubernetes ServiceAccount
+│
+├── iam-policy-json-files/
+│   ├── catalog-db-secret-policy.json       # IAM policy granting GetSecretValue on the secret
+│   └── trust-policy.json                   # IAM trust policy for EKS Pod Identity
+│
+└── secretproviderclass/
+    └── 01-catalog-secretproviderclass.yaml # SecretProviderClass CRD (SSCD ↔ ASM bridge)
 ```
 
 ---
