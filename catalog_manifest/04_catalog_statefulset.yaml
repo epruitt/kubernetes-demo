@@ -24,7 +24,7 @@ spec:
         app.kubernetes.io/component: mysql
         app.kubernetes.io/owner: retail-store-sample
     spec:
-      serviceAccount: catalog-mysql-sa
+      serviceAccount: catalog-mysql-sa # Service Account    
       containers:
         - name: mysql
           image: "public.ecr.aws/docker/library/mysql:8.0"
@@ -32,7 +32,7 @@ spec:
           ports:
             - name: mysql
               containerPort: 3306
-              protocol: TCP
+              protocol: TCP          
           env:
             - name: MYSQL_ROOT_PASSWORD
               value: my-secret-pw
@@ -44,19 +44,27 @@ spec:
               export MYSQL_USER=$(cat /mnt/secrets-store/MYSQL_USER);
               export MYSQL_PASSWORD=$(cat /mnt/secrets-store/MYSQL_PASSWORD);
               echo "Loaded secrets from AWS Secrets Manager. Starting MySQL with user=$MYSQL_USER";
-              exec docker-entrypoint.sh mysqld
+              exec docker-entrypoint.sh mysqld          
           volumeMounts:
             - name: data
               mountPath: /var/lib/mysql
             - name: aws-secrets
               mountPath: /mnt/secrets-store
-              readOnly: true
+              readOnly: true              
       volumes:
-        - name: data
-          emptyDir: {}
         - name: aws-secrets
           csi:
             driver: secrets-store.csi.k8s.io
             readOnly: true
             volumeAttributes:
-              secretProviderClass: "catalog-db-secrets"
+              secretProviderClass: "catalog-db-secrets"          
+# Added for provisioning EBS Volumes              
+  volumeClaimTemplates:
+    - metadata:
+        name: data-ebs
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: ebs-sc   
